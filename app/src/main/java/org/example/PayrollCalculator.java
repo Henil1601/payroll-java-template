@@ -1,34 +1,69 @@
 package org.example;
 
 public class PayrollCalculator {
-    private static final double HOURLY_RATE = 16.78;
-    private static final double OVERTIME_RATE = HOURLY_RATE * 1.5;
-    private static final double SOCIAL_SECURITY_TAX = 0.06;
-    private static final double FEDERAL_INCOME_TAX = 0.14;
-    private static final double STATE_INCOME_TAX = 0.05;
-    private static final double UNION_DUES = 10.00;
+    private static final double DEFAULT_PAY_RATE = 16.78;
+    private static final double OVERTIME_RATE_MULTIPLIER = 1.5;
 
-    public double calculateGrossPay(double hoursWorked) {
-        if (hoursWorked <= 40) {
-            return hoursWorked * HOURLY_RATE;
+    public double calculateGrossPay(double hours, double rate) {
+        if (hours <= 40) {
+            return hours * rate;
         } else {
-            double regularPay = 40 * HOURLY_RATE;
-            double overtimePay = (hoursWorked - 40) * OVERTIME_RATE;
-            return regularPay + overtimePay;
+            double overtimeHours = hours - 40;
+            return (40 * rate) + (overtimeHours * rate * OVERTIME_RATE_MULTIPLIER);
         }
     }
 
-    public double calculateDeductions(double grossPay, int dependents) {
+    public double[] calculateDeductions(double gross, int dependents) {
+        double socSec = gross * 0.06;
+        double fedTax = gross * 0.14;
+        double stateTax = gross * 0.05;
+        double union = 10.00;
         double insurance = dependents >= 3 ? 35.00 : 15.00;
-        double totalDeductions = (grossPay * SOCIAL_SECURITY_TAX) +
-                                 (grossPay * FEDERAL_INCOME_TAX) +
-                                 (grossPay * STATE_INCOME_TAX) +
-                                 UNION_DUES +
-                                 insurance;
-        return totalDeductions;
+        return new double[]{socSec, fedTax, stateTax, union, insurance};
     }
 
-    public double calculateNetPay(double grossPay, double deductions) {
-        return grossPay - deductions;
+    public double calculateLifeInsurance(int choice) {
+        switch (choice) {
+            case 2: return 5.00;
+            case 3: return 10.00;
+            case 4: return 15.00;
+            default: return 0.00;
+        }
+    }
+
+    public double calculateNetPay(double gross, double[] deductions, double lifeInsurance) {
+        double totalDeductions = deductions[0] + deductions[1] + deductions[2];
+        double tempNet = gross - totalDeductions;
+        double totalExtras = deductions[3] + deductions[4] + lifeInsurance;
+
+        if (tempNet >= totalExtras) {
+            return tempNet - totalExtras;
+        } else {
+            return tempNet; // Still print, and list "owed" values separately
+        }
+    }
+
+    public void printDeductionsBreakdown(double[] deductions, double lifeInsurance) {
+        System.out.printf("  SocSec:   $ %.2f\n", deductions[0]);
+        System.out.printf("  FedTax:   $ %.2f\n", deductions[1]);
+        System.out.printf("   StTax:   $ %.2f\n", deductions[2]);
+        System.out.printf("   Union:   $ %.2f\n", deductions[3]);
+        System.out.printf("     Ins:   $ %.2f\n", deductions[4]);
+        if (lifeInsurance > 0) {
+            System.out.printf(" LifeIns:   $ %.2f\n", lifeInsurance);
+        }
+    }
+
+    public void printOutstandingDues(double net, double[] deductions, double lifeInsurance) {
+        double totalDeductions = deductions[0] + deductions[1] + deductions[2];
+        double tempNet = net;
+        double totalExtras = deductions[3] + deductions[4] + lifeInsurance;
+
+        if (tempNet < totalExtras) {
+            System.out.println("\nThe employee still owes:");
+            if (deductions[3] > 0) System.out.printf("   Union:   $ %.2f\n", deductions[3]);
+            if (deductions[4] > 0) System.out.printf("     Ins:   $ %.2f\n", deductions[4]);
+            if (lifeInsurance > 0) System.out.printf(" LifeIns:   $ %.2f\n", lifeInsurance);
+        }
     }
 }

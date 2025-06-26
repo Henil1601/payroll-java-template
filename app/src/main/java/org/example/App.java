@@ -15,21 +15,46 @@ public class App {
         System.out.print("How many children do you have? ");
         int dependents = scanner.nextInt();
 
-        double grossPay = calculator.calculateGrossPay(hours);
-        double deductions = calculator.calculateDeductions(grossPay, dependents);
-        double netPay = calculator.calculateNetPay(grossPay, deductions);
+        double rate;
+        do {
+            System.out.print("Enter your hourly pay rate: ");
+            rate = scanner.nextDouble();
+            if (rate < 0) System.out.println("Pay rate can't be negative. Try again.");
+        } while (rate < 0);
+
+        int plan = 0;
+        while (true) {
+            System.out.println("\nWhich life insurance plan do you want to select?");
+            System.out.println("  (1) no plan");
+            System.out.println("  (2) single plan");
+            System.out.println("  (3) married plan");
+            System.out.println("  (4) married with children plan");
+            plan = scanner.nextInt();
+
+            if (plan == 4 && dependents == 0) {
+                System.out.println("Sorry! You need at least one child to select that plan.");
+            } else if (plan >= 1 && plan <= 4) {
+                break;
+            } else {
+                System.out.println("Invalid selection. Try again.");
+            }
+        }
+
+        double gross = calculator.calculateGrossPay(hours, rate);
+        double[] deductions = calculator.calculateDeductions(gross, dependents);
+        double lifeIns = calculator.calculateLifeInsurance(plan);
+        double net = calculator.calculateNetPay(gross, deductions, lifeIns);
 
         System.out.println("\nPayroll Stub:\n");
         System.out.printf("   Hours:   %.1f\n", hours);
-        System.out.printf("    Rate:   $%.2f/hr\n", 16.78);
-        System.out.printf("   Gross:   $%.2f\n\n", grossPay);
-        System.out.printf("  SocSec:   $%.2f\n", grossPay * 0.06);
-        System.out.printf("  FedTax:   $%.2f\n", grossPay * 0.14);
-        System.out.printf("   StTax:   $%.2f\n", grossPay * 0.05);
-        System.out.printf("   Union:   $%.2f\n", 10.00);
-        System.out.printf("     Ins:   $%.2f\n", dependents >= 3 ? 35.00 : 15.00);
-        System.out.printf("\n     Net:   $%.2f\n", netPay);
+        System.out.printf("    Rate:   %.2f $/hr\n", rate);
+        System.out.printf("   Gross:   $ %.2f\n\n", gross);
+
+        calculator.printDeductionsBreakdown(deductions, lifeIns);
+        System.out.printf("\n     Net:   $ %.2f\n", net);
+        calculator.printOutstandingDues(gross - (deductions[0] + deductions[1] + deductions[2]), deductions, lifeIns);
 
         System.out.println("\nThank you for using the Payroll Program!");
+        scanner.close();
     }
 }
